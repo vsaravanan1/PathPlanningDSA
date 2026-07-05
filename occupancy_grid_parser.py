@@ -16,7 +16,7 @@ class OccupancyGridUtilities:
             print(sub_ds.shape)
             name = f"occupancy_check_{i}.png"
             plt.tight_layout()
-            plt.imshow(sub_ds, cmap='gray_r')
+            plt.imshow(sub_ds, cmap='gray_r', interpolation='nearest', origin='lower')
             plt.title("0=white, 1=black")
             plt.colorbar()
             plt.savefig(name)

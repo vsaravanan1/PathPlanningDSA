@@ -53,8 +53,8 @@ class RRTPlanner:
         self.max_tree_size = max_tree_size
         self.og_util = OccupancyGridUtilities()
         self.grid_num = grid_num
-        self.start = self.get_start_node(0)
-        self.goal = self.get_end_node(0)
+        self.start = self.get_start_node(1)
+        self.goal = self.get_end_node(1)
         self.search_tree.insert([self.start])
         self.parents = {0: -1,}
         self.nodes = [self.start]
@@ -65,19 +65,20 @@ class RRTPlanner:
     def get_start_node(self, mode):
         if mode == 0:
             return np.array([0, 0])
-
+        elif mode == 1:
+            return np.array([391, 22])
         return np.array([0, 0])
 
     def get_end_node(self, mode):
         og_shape = np.array(list(self.og_util.occupancy_grids[self.grid_num].shape))
         og_final = og_shape - 1
         if mode == 0:
-            return og_final
+            return np.array([100, 22])
         return og_final
     
     
     def expand_tree(self, step_size):
-        sample_goal = np.random.random_sample() < 0.4
+        sample_goal = np.random.random_sample() < 0.1
         og_shape = np.array(list(self.og_util.occupancy_grids[self.grid_num].shape))
        
         if not sample_goal:
@@ -103,6 +104,7 @@ class RRTPlanner:
             return []
 
         local_path = self.og_util.get_local_path(nearest_node, new_candidate_discrete, self.grid_num)
+        if len(local_path) == 0: return []
         if not self.og_util.collision_exists(local_path, self.grid_num):
              for i in range(1, len(local_path)):
                 self.nodes.append(local_path[i])
@@ -132,20 +134,26 @@ class RRTPlanner:
             path = np.array(self.expand_tree(step_size))
             if len(path) > 0:
                 print(path)
-                plt.imshow(og, cmap='gray_r', interpolation='nearest')
-                plt.scatter(path[:,1], path[:,0], s=1, c='red')
+                plt.figure(figsize=(10, 10), dpi=300)
+                plt.imshow(og, cmap='gray_r', interpolation='nearest', origin='lower')
+                plt.plot(path[:,1], path[:,0], linewidth=0.5, c='red')
+                obstacle_count = 0
+                for waypoint in path:
+                    r, c = waypoint
+                    if og[r, c] == 1:
+                        obstacle_count += 1
+                print(f"Obstacle count in path: {obstacle_count}")
                 plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
                 plt.savefig('rrt_success.png')
                 plt.close()
                 return 
         print("failed")
-        plt.imshow(og, cmap='gray_r', interpolation='nearest')
+        plt.imshow(og, cmap='gray_r', interpolation='none', origin='lower')
         nodes_arr = np.array(self.nodes)
         plt.scatter(nodes_arr[:, 1], nodes_arr[:, 0], s=1, c='red')
         plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
         plt.savefig("rrt_debug.png")
         plt.close()
-        print("failed")
 
         
 
