@@ -13,10 +13,9 @@ class OccupancyGridUtilities:
         for i, np_file in enumerate(self.dir_list):
             file_path = os.path.join(self.ds_path, np_file)
             sub_ds = np.load(file_path)
-            print(sub_ds.shape)
             name = f"occupancy_check_{i}.png"
             plt.tight_layout()
-            plt.imshow(sub_ds, cmap='gray_r', interpolation='nearest', origin='lower')
+            plt.imshow(sub_ds, cmap='gray_r', interpolation='none', origin='lower')
             plt.title("0=white, 1=black")
             plt.colorbar()
             plt.savefig(name)

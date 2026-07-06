@@ -6,6 +6,7 @@ import random
 from occupancy_grid_parser import OccupancyGridUtilities
 
 
+
 """
 Breadth-First Search Flood Fill algorithm for start and end node identification from occupancy grid.
 """
@@ -31,14 +32,15 @@ def bfs_floodfill(og_util : OccupancyGridUtilities, grid_num : int):
     
     pockets = []
     for element in np.unique(fs_identifiers):
-        pockets.append(np.where(fs_identifiers == element))
+        if element != -1:
+            pockets.append(fs_identifiers == element)
     return fs_identifiers, pockets
 
 def double_bfs(og_util : OccupancyGridUtilities, grid_num : int, mask : np.array[bool]):
     og = og_util.occupancy_grids[grid_num]
     valid_points = np.argwhere(mask)
-    random.seed(98)
-    sampled_row_idx  = random.randint(0, og.shape[0]-1)
+    random.seed(4)
+    sampled_row_idx  = random.randint(0, valid_points.shape[0]-1)
     random_point = tuple(valid_points[sampled_row_idx].tolist())
     start_point = None
     end_point = None
@@ -77,33 +79,25 @@ def double_bfs(og_util : OccupancyGridUtilities, grid_num : int, mask : np.array
     return start_point, end_point
 
 
-def main():
-    # https://stackoverflow.com/questions/19586828/drawing-grid-pattern-in-matplotlib
-    og_util = OccupancyGridUtilities()
-    og = og_util.occupancy_grids[0]
-    fig, ax = plt.subplots(1, 1, tight_layout=True)
+# def main():
+#     og_util = OccupancyGridUtilities()
+#     for i in range(12):
+#         fs_id, pockets = bfs_floodfill(og_util, i)
+        
+#         pockets.sort(key = lambda a : np.sum(a), reverse=True)
+#         filtered_pockets = pockets[:5]
+        
+#         max_norm = 0
+#         for mask in filtered_pockets:
+#             start_point_c, end_point_c = double_bfs(og_util, i, mask)
+#             if np.linalg.norm(np.array(end_point_c) - np.array(start_point_c)) > max_norm:
+#                 start_point, end_point = start_point_c, end_point_c
+#                 max_norm = np.linalg.norm(np.array(end_point) - np.array(start_point))
 
-    fs_id, _ = bfs_floodfill(og_util, 0)
-    max_len = 0
-    mask = None
-    for id in np.unique(fs_id):
-        if len(fs_id == id) > max_len:
-            length = len(fs_id == id)
-            if length > max_len:
-                mask = (fs_id == id)
-                max_len = length
-
-    print(max_len)
-    valid_indices = np.argwhere(mask)
-    print(valid_indices)
-
-    start_point, end_point = double_bfs(og_util, 0, mask)
-    print(f"Start: {start_point}")
-    print(f"End: {end_point}")
-
-
-if __name__ == "__main__":
-    main()
+#         print(f"Occupancy grid: {i}, Start: {start_point}, End: {end_point}")
+    
+# if __name__ == "__main__":
+#     main()
 
 
         
