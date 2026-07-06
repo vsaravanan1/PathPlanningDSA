@@ -76,7 +76,7 @@ def double_bfs(og_util : OccupancyGridUtilities, grid_num : int, mask : np.array
     
     end_point = (i, j)
     
-    return start_point, end_point
+    return np.array(start_point), np.array(end_point)
 
 
 # def main():

@@ -39,7 +39,8 @@ def main():
     og_util = OccupancyGridUtilities()
     for i in range(len(og_util.occupancy_grids)):
         start, goal = get_start_goal(og_util, i, False)
-        planner = RRTStarPlanner(5000, i, og_util, start, goal)
+        print(start, goal, og_util.occupancy_grids[i][tuple(start)], og_util.occupancy_grids[i][tuple(goal)])
+        planner = RRTStarPlanner(20000, i, og_util, start, goal)
         planner.run()
 
 if __name__ == "__main__":

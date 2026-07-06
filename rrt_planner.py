@@ -51,7 +51,7 @@ class DynamicKDTree:
         idx, tree_candidate = self.query(coordinate)
         dist = np.linalg.norm(tree_candidate - coordinate)
         if radius < dist:
-            return [], []
+            return [idx], [tree_candidate]
         else:
             candidate_points = []
             indices = self.tree.query_ball_point(coordinate, radius)
@@ -69,7 +69,7 @@ class DynamicKDTree:
     
 
 class RRTPlanner:
-    def __init__(self, max_tree_size, grid_num, og_util, start, goal):
+    def __init__(self, max_tree_size, grid_num, og_util, start : np.array, goal : np.array):
         self.search_tree = DynamicKDTree()
         self.max_tree_size = max_tree_size
         self.og_util = og_util
@@ -202,6 +202,107 @@ class RRTStarPlanner:
         
         if not sample_goal:
             new_candidate = np.random.rand(2)  
+            new_candidate_discrete = (new_candidate * og_shape).astype(int)
+        else:
+            new_candidate_discrete = self.goal.copy()
+        
+
+        idx, nearest_node = self.search_tree.query(new_candidate_discrete)
+        nearest_node = nearest_node.astype(int)
+        direction = new_candidate_discrete - nearest_node
+
+        dist_pixels = np.linalg.norm(direction)
+        if dist_pixels == 0:
+            return []
+            
+        max_step_pixels = max(1, int(step_size * max(og_shape)))
+        
+        if dist_pixels > max_step_pixels:
+            direction_normalized = direction / dist_pixels
+            new_candidate_discrete = nearest_node + direction_normalized * max_step_pixels
+            new_candidate_discrete = new_candidate_discrete.astype(int)
+            
+        if ((new_candidate_discrete == nearest_node).all()):
+            return []
+
+
+        indices, nearby_nodes = self.search_tree.query_ball_point(new_candidate_discrete, radius)
+        nearby_nodes = [node.astype(int) for node in nearby_nodes]
+        
+        chosen_candidate_cost = np.inf
+        chosen_path = None
+        idx = -1
+
+        for i, node in enumerate(nearby_nodes):    
+            local_path = self.og_util.get_local_path(node, new_candidate_discrete, self.grid_num)
+            if len(local_path) == 0: continue
+            # if collision doesn't exist, calculate cost
+            if not self.og_util.collision_exists(local_path, self.grid_num):
+                steps = local_path[1:] - local_path[0:-1]
+                step_norms = np.linalg.norm(steps, axis=1)
+                candidate_cost = self.total_costs[indices[i]] + np.sum(step_norms)
+                if candidate_cost < chosen_candidate_cost:
+                    chosen_candidate_cost = candidate_cost
+                    chosen_path = local_path
+                    idx = indices[i]
+        
+        if idx == -1: return []
+        
+        self.nodes.append(chosen_path[-1])
+        self.search_tree.insert([chosen_path[-1]])
+        self.parents[self.search_tree.count - 1] = idx
+        self.total_costs[self.search_tree.count - 1] = chosen_candidate_cost
+
+        # neighbor modification
+        for i, node in enumerate(nearby_nodes):
+            node_idx = indices[i]
+            if node_idx == idx: continue
+            nearby_to_curr_path = self.og_util.get_local_path(chosen_path[-1], self.nodes[node_idx], self.grid_num)
+            if not self.og_util.collision_exists(nearby_to_curr_path, self.grid_num):
+                steps = nearby_to_curr_path[1:] - nearby_to_curr_path[0:-1]
+                step_norms = np.linalg.norm(steps, axis=1)
+                path_cost = np.sum(step_norms)
+                new_node_idx = self.search_tree.count - 1
+                candidate_total_cost = path_cost + self.total_costs[new_node_idx]
+                if candidate_total_cost < self.total_costs[node_idx]:
+                    self.total_costs[node_idx] = candidate_total_cost
+                    self.parents[node_idx] = new_node_idx
+        
+        path = []
+        for i in range(chosen_path.shape[0]):
+            if (chosen_path[i] == self.goal).all():
+                local_path = self.og_util.get_local_path(chosen_path[0], chosen_path[i], self.grid_num)
+                local_path_ex = local_path[1:,:]
+                for j in range(local_path_ex.shape[0]):
+                    path.append(local_path_ex[local_path_ex.shape[0] - 1 - j])
+                
+                current_node_idx = self.parents[self.search_tree.count-1]
+                parent_node_idx = self.parents[current_node_idx]
+                while current_node_idx != 0:
+                    current_node = self.nodes[current_node_idx]
+                    parent_node = self.nodes[parent_node_idx]
+                    local_path = self.og_util.get_local_path(parent_node, current_node, self.grid_num)
+                    if parent_node_idx == 0:
+                        local_path_ex = local_path
+                    else:
+                        local_path_ex = local_path[:-1,:]
+                    for j in range(local_path_ex.shape[0]):
+                        path.append(local_path_ex[local_path_ex.shape[0] - 1 - j])
+                    
+                    current_node_idx = self.parents[current_node_idx]
+                    parent_node_idx = self.parents[parent_node_idx]
+
+                path.reverse()
+                return path
+        
+        return []
+
+    def expand_tree(self, step_size, radius):
+        sample_goal = np.random.random_sample() < 0.2
+        og_shape = np.array(list(self.og_util.occupancy_grids[self.grid_num].shape))
+        
+        if not sample_goal:
+            new_candidate = np.random.rand(2)  
         else:
             new_candidate = (self.goal/og_shape).astype(np.float64)
     
@@ -269,23 +370,23 @@ class RRTStarPlanner:
         path = []
         for i in range(chosen_path.shape[0]):
             if (chosen_path[i] == self.goal).all():
-                local_path = self.og_util.get_local_path(chosen_path[i], chosen_path[0], self.grid_num)
-                local_path_ex = local_path[:-1,:]
+                local_path = self.og_util.get_local_path(chosen_path[0], chosen_path[i], self.grid_num)
+                local_path_ex = local_path[1:,:]
                 for j in range(local_path_ex.shape[0]):
-                    path.append(local_path_ex[j])
+                    path.append(local_path_ex[local_path_ex.shape[0] - 1 - j])
                 
                 current_node_idx = self.parents[self.search_tree.count-1]
                 parent_node_idx = self.parents[current_node_idx]
                 while current_node_idx != 0:
                     current_node = self.nodes[current_node_idx]
                     parent_node = self.nodes[parent_node_idx]
-                    local_path = self.og_util.get_local_path(current_node, parent_node, self.grid_num)
+                    local_path = self.og_util.get_local_path(parent_node, current_node, self.grid_num)
                     if parent_node_idx == 0:
                         local_path_ex = local_path
                     else:
                         local_path_ex = local_path[:-1,:]
                     for j in range(local_path_ex.shape[0]):
-                        path.append(local_path_ex[j])
+                        path.append(local_path_ex[local_path_ex.shape[0] - 1 - j])
                     
                     current_node_idx = self.parents[current_node_idx]
                     parent_node_idx = self.parents[parent_node_idx]
@@ -309,9 +410,9 @@ class RRTStarPlanner:
         if saved_path is not None:
             plt.figure(figsize=(10, 10), dpi=300)
             plt.imshow(og, cmap='gray_r', interpolation='nearest', origin='lower')
-            plt.plot(path[:,1], path[:,0], linewidth=0.5, c='red')
+            plt.plot(saved_path[:,1], saved_path[:,0], linewidth=0.5, c='red')
             obstacle_count = 0
-            for waypoint in path:
+            for waypoint in saved_path:
                 r, c = waypoint
                 if og[r, c] == 1:
                     obstacle_count += 1
