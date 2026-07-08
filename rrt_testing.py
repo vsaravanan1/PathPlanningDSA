@@ -40,8 +40,13 @@ def main():
     for i in range(len(og_util.occupancy_grids)):
         start, goal = get_start_goal(og_util, i, False)
         print(start, goal, og_util.occupancy_grids[i][tuple(start)], og_util.occupancy_grids[i][tuple(goal)])
-        planner = RRTStarPlanner(20000, i, og_util, start, goal)
-        planner.run()
+        j = 0
+        random_state = 10
+        while j < 4:
+            planner = RRTStarPlanner(20000, i, og_util, start, goal, random_state+j)
+            result = planner.run(0.005*(j+1), 10-j)
+            if (result is not None and len(result) > 0): break
+            j += 1
 
 if __name__ == "__main__":
     main()

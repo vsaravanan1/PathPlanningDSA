@@ -39,7 +39,7 @@ def bfs_floodfill(og_util : OccupancyGridUtilities, grid_num : int):
 def double_bfs(og_util : OccupancyGridUtilities, grid_num : int, mask : np.array[bool]):
     og = og_util.occupancy_grids[grid_num]
     valid_points = np.argwhere(mask)
-    random.seed(4)
+    random.seed(10)
     sampled_row_idx  = random.randint(0, valid_points.shape[0]-1)
     random_point = tuple(valid_points[sampled_row_idx].tolist())
     start_point = None
