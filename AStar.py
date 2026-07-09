@@ -3,6 +3,8 @@
 
 import heapq
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 # priority queue to keep the open section logn
 # numpy used for grid
 
@@ -143,3 +145,23 @@ def a_star(grid, start, end):
 
                     # heapify to account for changed g, f, h costs
                     heapq.heapify(openHeap)
+
+
+#def main():
+
+#    grid = np.load("LDEM_875S_5M.npy")
+
+#    start = (0, 0)
+#    end = (450, 450)
+
+#    path = a_star(grid, start, end)
+
+#    if path:
+#        path = np.array(path)
+#        plt.figure(figsize=(10, 10), dpi=300)
+#        plt.imshow(grid, cmap='gray_r', interpolation='nearest', origin='lower')
+#        plt.plot(path[:, 1], path[:, 0], linewidth=0.5, c='red')
+#        #plt.savefig("astar_success.png", bbox_inches="tight")
+#        plt.show()
+#    else:
+#        print("No path found")
