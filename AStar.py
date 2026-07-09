@@ -152,7 +152,7 @@ def a_star(grid, start, end):
 #    grid = np.load("LDEM_875S_5M.npy")
 
 #    start = (0, 0)
-#    end = (450, 450)
+#    end = (99, 99)
 
 #    path = a_star(grid, start, end)
 
@@ -161,7 +161,16 @@ def a_star(grid, start, end):
 #        plt.figure(figsize=(10, 10), dpi=300)
 #        plt.imshow(grid, cmap='gray_r', interpolation='nearest', origin='lower')
 #        plt.plot(path[:, 1], path[:, 0], linewidth=0.5, c='red')
+#        obstacle_count = 0
+#        for waypoint in path:
+#            r, c = waypoint
+#            if grid[r][c] == 1:
+#                obstacle_count += 1
+#        print(f"Obstacle count in path: {obstacle_count}")
 #        #plt.savefig("astar_success.png", bbox_inches="tight")
-#        plt.show()
+#       plt.show()
 #    else:
 #        print("No path found")
+
+#if __name__ == "__main__":
+#    main()
