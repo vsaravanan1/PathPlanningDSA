@@ -19,7 +19,7 @@ class DynamicKDTree:
         if self.count == 0:
             self.tree = KDTree(coordinates)
             self.pending_buffer = []
-        elif len(self.pending_buffer) >= 500:
+        elif len(self.pending_buffer) >= 50:
             current_tree_data = self.tree.data.tolist()
             current_tree_data += self.pending_buffer
             self.tree = KDTree(current_tree_data)
