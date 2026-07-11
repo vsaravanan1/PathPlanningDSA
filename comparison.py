@@ -141,13 +141,13 @@ def get_average_performance(map_result_dicts):
             average_time[2] += rrtstar_dict["time"]
             average_efficiency[2] += rrtstar_dict["efficiency"]
 
-        for i in range(len(success_count)):
-            if success_count[i] == 0:
-                average_efficiency[i] = -1.0
-                average_time[i] = -1.0
-            else:
-                average_efficiency[i] = average_efficiency[i]/success_count[i]
-                average_time[i] = average_time[i]/success_count[i]
+    for i in range(len(success_count)):
+        if success_count[i] == 0:
+            average_efficiency[i] = -1.0
+            average_time[i] = -1.0
+        else:
+            average_efficiency[i] = average_efficiency[i]/success_count[i]
+            average_time[i] = average_time[i]/success_count[i]
 
     return success_count, average_time, average_efficiency
 
@@ -159,7 +159,7 @@ def print_summary_stats(map_result_dicts):
     print("Path Planning Algorithm Performance Summary")
     for i in range(len(success_count)):
         if success_count[i] > 0:
-            print(f"{algos[i]}:", f"success rate: {success_count[i]}/{len(map_result_dicts)}, average time: f{average_time[i]}, average efficiency: {average_efficiency[i]}")
+            print(f"{algos[i]}:", f"success rate: {success_count[i]}/{len(map_result_dicts)}, average time: {average_time[i]}, average efficiency: {average_efficiency[i]}")
         else:
             print(f"{algos[i]}:", f"success_rate: 0/{len(map_result_dicts)}")
 

@@ -46,7 +46,7 @@ def main():
             print(f"{rrt_time*1000}ms to run RRT")
 
             print("\nBeginning A* analysis...")
-            astar_path, astar_time = astar_test(grid, start, goal)
+            astar_path, astar_time = astar_test(grid_num, grid, start, goal)
             print(f"{astar_time*1000}ms to run A*")
 
             diff_ms = abs(astar_time - rrt_time) * 1000
@@ -63,7 +63,7 @@ def main():
             print(f"{rrtstar_time*1000:.2f}ms to run RRT*")
 
             print("\nBeginning A* analysis...")
-            astar_path, astar_time = astar_test(grid, start, goal)
+            astar_path, astar_time = astar_test(grid_num, grid, start, goal)
             print(f"{astar_time*1000:.2f}ms to run A*")
 
             diff_ms = abs(astar_time - rrtstar_time) * 1000
@@ -90,7 +90,7 @@ def main():
             start, goal = get_start_goal(og_util, grid_num)
 
             print("\nBeginning A* analysis...")
-            astar_path, astar_time = astar_test(grid, start, goal)
+            astar_path, astar_time = astar_test(grid_num, grid, start, goal)
             print(f"{astar_time*1000:.2f}ms to run A*")
 
             print("\nBeginning RRT analysis...")
