@@ -35,7 +35,7 @@ class Node:
 
 
 
-def a_star(grid, start, end):
+def a_star(grid_num, grid, start, end):
     # convert start and end to nodes
     start = Node(start)
     end = Node(end)
@@ -75,6 +75,13 @@ def a_star(grid, start, end):
             while current:
                 path.append(current.position)
                 current = current.parent
+
+            if len(path) > 0:
+                plotted_path = np.array(path)
+                plt.figure(figsize=(10, 10), dpi=300)
+                plt.imshow(grid, cmap='gray_r', interpolation='nearest', origin='lower')
+                plt.plot(plotted_path[:, 1], plotted_path[:, 0], linewidth=0.25, c='red')
+                plt.savefig(f"astar_success_{grid_num}.png", bbox_inches="tight")
 
             # returns entire path in reverse
             return path[::-1]
@@ -139,9 +146,9 @@ def a_star(grid, start, end):
                 if (current.g_cost + moveCost < neighbour.g_cost):
 
                     # setting costs and parent same as previous
-                    neighbour.g_cost = current.g_cost + moveCost;
+                    neighbour.g_cost = current.g_cost + moveCost
                     neighbour.f_cost = neighbour.g_cost + neighbour.h_cost
-                    neighbour.parent = current;
+                    neighbour.parent = current
 
                     # heapify to account for changed g, f, h costs
                     heapq.heapify(openHeap)

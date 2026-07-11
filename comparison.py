@@ -7,31 +7,29 @@ from rrt_planner import RRTStarPlanner, RRTPlanner
 from occupancy_grid_parser import OccupancyGridUtilities
 from get_start_goal import get_start_goal
 
-def astar_test(grid, start, goal): #astar timing
+def astar_test(grid_num, grid, start, goal): 
     ts = time.perf_counter()
-    path = a_star(grid, tuple(start), tuple(goal))
+    path = a_star(grid_num, grid, tuple(start), tuple(goal))
     elapsed = time.perf_counter() - ts
     return path, elapsed
 
-def rrtstar_test(og_util, grid_num, start, goal, max_tree_size=3000, max_attempts=4): #rstar timing
+def rrtstar_test(og_util, grid_num, start, goal, max_tree_size=20000, max_attempts=4): 
     ts = time.perf_counter()
     path = None
     for j in range(max_attempts):
         plan = RRTStarPlanner(max_tree_size, grid_num, og_util, start, goal, random_state=10 + j)
-        path = plan.run(step_size = 0.05, radius = 10 - j)
+        path = plan.run(0.05, 10 - j)
         if path is not None and len(path) > 0:
             break
     elapsed = time.perf_counter() - ts
     return path, elapsed
 
-
-
-def rrt_test(og_util, grid_num, start, goal, max_tree_size=3000, max_attempts=4): #rstar timing 
+def rrt_test(og_util, grid_num, start, goal, max_tree_size=20000, max_attempts=4):  
     ts = time.perf_counter()
     path = None
     for j in range(max_attempts):
         plan = RRTPlanner(max_tree_size, grid_num, og_util, start, goal, random_state=10 + j)
-        path = plan.run(step_size = 0.05)
+        path = plan.run(0.05)
         if path is not None and len(path) > 0:
             break
     elapsed = time.perf_counter() - ts
@@ -56,60 +54,123 @@ def efficiency(path, start, goal):
 def compare_on_map(og_util, grid_num):
     grid = og_util.occupancy_grids[grid_num]
     start, goal = get_start_goal(og_util,grid_num)
-    astar_path, astar_time = astar_test(grid, start, goal)
+
+    astar_path, astar_time = astar_test(grid_num, grid, start, goal)
     rrtstar_path, rrtstar_time = rrtstar_test(og_util, grid_num, start, goal)
     rrt_path, rrt_time = rrt_test(og_util, grid_num, start, goal)
 
+    astar_success = astar_path is not None
+    rrt_success = rrt_path is not None
+    rrtstar_success = rrtstar_path is not None
+
+    astar_eff = efficiency(astar_path, start, goal)
+    rrt_eff = efficiency(rrt_path, start, goal)
+    rrtstar_eff = efficiency(rrtstar_path, start, goal)
     
-    return {
-        "grid_num": grid_num,
-        "start": start,
-        "goal": goal,
-        "astar": {
-            "time_sec": astar_time,
-            "success": astar_path is not None,
-            "path_length": path_length(astar_path),
-            "efficiency": efficiency(astar_path, start, goal) if astar_path else None,
-        },
-        "rrt": {
-            "time_sec": rrt_time, 
-            "success": rrt_path is not None,
-            "path_length": path_length(rrt_path),
-            "efficiency": efficiency(rrt_path, start, goal) if rrt_path is not None else None,
-        },
-        "rrtstar": {
-            "time_sec": rrtstar_time, 
-            "success": rrtstar_path is not None,
-            "path_length": path_length(rrtstar_path),
-            "efficiency": efficiency(rrtstar_path, start, goal) if rrtstar_path is not None else None,
-        },
-    }
 
-def format(name, stats):
-    if not stats["success"]:
-        return f"{name} failed to find a path."
-    return (f"  {name:<8} length = {stats['path_length']:>8.1f}   "
-            f"efficiency = {stats['efficiency']:.2f}   time = {stats['time_sec']:.3f}s") 
+    astar_info_dict = {"time": astar_time, "success": astar_success, "path_length": path_length(astar_path), "efficiency": astar_eff}
+    rrt_info_dict = {"time": rrt_time, "success": rrt_success, "path_length": path_length(rrt_path), "efficiency": rrt_eff}
+    rrtstar_info_dict = {"time": rrtstar_time, "success": rrtstar_success, "path_length": path_length(rrtstar_path), "efficiency": rrtstar_eff}
 
-def print_comparison(result):
-    start = tuple(int(x) for x in result['start'])
-    goal = tuple(int(x) for x in result['goal'])
-    print(f"\nMap {result['grid_num']} | start={start}  goal={goal}:")
-    print("-" * 60)
-    print(format("A*", result["astar"]))
-    print(format("RRT*", result["rrtstar"]))
-    print(format("RRT", result["rrt"]))
+
+    comparison_dict = {}
+    comparison_dict["endpoints"] = (start, goal)
+    comparison_dict["astar"] = astar_info_dict
+    comparison_dict["rrt"] = rrt_info_dict
+    comparison_dict["rrtstar"] = rrtstar_info_dict
+    
+    return comparison_dict
+
+
+def print_comparison(comparison_dict, grid_num):
+    start, goal = comparison_dict["endpoints"]
+    print(f"\nMap {grid_num} - Start: {start},  Goal: {goal}")
+    algos = ["astar", "rrt", "rrtstar"]
+
+    best_time = np.inf
+    best_time_algo = None
+    best_efficiency = 0.0
+    best_efficiency_algo = None
+
+    for algo in algos:
+        algo_info_dict = comparison_dict[algo]
+        if algo_info_dict["success"]:
+            print(f"{algo}: Time Taken - {algo_info_dict["time"]}, Efficiency (relative to straight line) - {algo_info_dict["efficiency"]}")
+            if algo_info_dict["time"] < best_time:
+                best_time_algo = algo
+                best_time = algo_info_dict["time"]
+            if algo_info_dict["efficiency"] > best_efficiency:
+                best_efficiency_algo = algo
+                best_efficiency = algo_info_dict["efficiency"]
+        else:
+            print(f"{algo}: Unsuccessful. Could not find path.")
+    
+    if best_time_algo and best_efficiency_algo:
+        print()
+        print(f"The algorithm that found a successful path in the least time was: {best_time_algo}.")
+        print(f"The algorithm that found the shortest path was: {best_efficiency_algo}.")
+        print()
+    else:
+        print()
+        print("None of the algorithms could find a viable path.")
+        print()
+
+
+def get_average_performance(map_result_dicts):
+    success_count = [0, 0, 0]
+    average_time = [0.0, 0.0, 0.0]
+    average_efficiency = [0.0, 0.0, 0.0]
+
+    for comparison_dict in map_result_dicts:
+        astar_dict = comparison_dict["astar"]
+        rrt_dict = comparison_dict["rrt"]
+        rrtstar_dict = comparison_dict["rrtstar"]
+
+        if astar_dict["success"]: 
+            success_count[0] += 1
+            average_time[0] += astar_dict["time"]
+            average_efficiency[0] += astar_dict["efficiency"]
+        
+        if rrt_dict["success"]:
+            success_count[1] += 1
+            average_time[1] += rrt_dict["time"]
+            average_efficiency[1] += rrt_dict["efficiency"]
+        
+        if rrtstar_dict["success"]:
+            success_count[2] += 1
+            average_time[2] += rrtstar_dict["time"]
+            average_efficiency[2] += rrtstar_dict["efficiency"]
+
+        for i in range(len(success_count)):
+            if success_count[i] == 0:
+                average_efficiency[i] = -1.0
+                average_time[i] = -1.0
+            else:
+                average_efficiency[i] = average_efficiency[i]/success_count[i]
+                average_time[i] = average_time[i]/success_count[i]
+
+    return success_count, average_time, average_efficiency
+
+def print_summary_stats(map_result_dicts):
+    success_count, average_time, average_efficiency = get_average_performance(map_result_dicts)
+    algos = ["astar", "rrt", "rrtstar"]
+
+    print()
+    print("Path Planning Algorithm Performance Summary")
+    for i in range(len(success_count)):
+        if success_count[i] > 0:
+            print(f"{algos[i]}:", f"success rate: {success_count[i]}/{len(map_result_dicts)}, average time: f{average_time[i]}, average efficiency: {average_efficiency[i]}")
+        else:
+            print(f"{algos[i]}:", f"success_rate: 0/{len(map_result_dicts)}")
+
 
 
 if __name__ == "__main__":
     og_util = OccupancyGridUtilities()
-    r1 = compare_on_map(og_util, 1)
-    r2 = compare_on_map(og_util, 2)
-    r3 = compare_on_map(og_util, 3)
-    r4 = compare_on_map(og_util, 4)
-    r5 = compare_on_map(og_util, 5)
-    print_comparison(r1)
-    print_comparison(r2)
-    print_comparison(r3)
-    print_comparison(r4)
-    print_comparison(r5)
+    comparison_dicts = []
+    for i in range(len(og_util.occupancy_grids)):
+        map_result_dict = compare_on_map(og_util, i)
+        print_comparison(map_result_dict, i)
+        comparison_dicts.append(map_result_dict)
+    print_summary_stats(comparison_dicts)
+    

@@ -110,7 +110,6 @@ class RRTPlanner:
         if ((new_candidate_discrete == nearest_node).all()):
             return []
 
-        # point
         local_path = self.og_util.get_local_path(nearest_node, new_candidate_discrete, self.grid_num)
         if len(local_path) <= 1: return []
 
@@ -179,23 +178,21 @@ class RRTPlanner:
             if len(path) > 0:
                 plt.figure(figsize=(10, 10), dpi=300)
                 plt.imshow(og, cmap='gray_r', interpolation='nearest', origin='lower')
-                plt.plot(path[:,1], path[:,0], linewidth=0.5, c='red')
+                plt.plot(path[:,1], path[:,0], linewidth=0.25, c='red')
                 obstacle_count = 0
                 for waypoint in path:
                     r, c = waypoint
                     if og[r, c] == 1:
                         obstacle_count += 1
-                print(f"Obstacle count in path: {obstacle_count}")
-                plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
+                plt.scatter(self.goal[1], self.goal[0], s=5, c='blue', marker='*')
                 plt.savefig(f'rrt_success_{self.grid_num}.png')
                 plt.close()
                 return path
-        print("failed")
         plt.figure(figsize=(10, 10), dpi=300)
         plt.imshow(og, cmap='gray_r', interpolation='none', origin='lower')
         nodes_arr = np.array(self.nodes)
         plt.scatter(nodes_arr[:, 1], nodes_arr[:, 0], s=1, c='red')
-        plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
+        plt.scatter(self.goal[1], self.goal[0], s=5, c='blue', marker='*')
         plt.savefig(f"rrt_debug_{self.grid_num}.png")
         plt.close()
         if len(path) == 0:
@@ -330,25 +327,23 @@ class RRTStarPlanner:
         
         if saved_path is not None:
             plt.figure(figsize=(10, 10), dpi=300)
-            plt.imshow(og, cmap='gray_r', interpolation='nearest', origin='lower')
-            plt.plot(saved_path[:,1], saved_path[:,0], linewidth=0.5, c='red')
+            plt.imshow(og, cmap='gray_r', interpolation='none', origin='lower')
+            plt.plot(saved_path[:,1], saved_path[:,0], linewidth=0.25, c='red')
             obstacle_count = 0
             for waypoint in saved_path:
                 r, c = waypoint
                 if og[r, c] == 1:
                     obstacle_count += 1
-            print(f"Obstacle count in path: {obstacle_count}")
-            plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
+            plt.scatter(self.goal[1], self.goal[0], s=5, c='blue', marker='*')
             plt.savefig(f'rrt_star_success_{self.grid_num}.png')
             plt.close()
             return saved_path
         else:
-            print("failed")
             plt.figure(figsize=(10, 10), dpi=300)
             plt.imshow(og, cmap='gray_r', interpolation='none', origin='lower')
             nodes_arr = np.array(self.nodes)
             plt.scatter(nodes_arr[:, 1], nodes_arr[:, 0], s=1, c='red')
-            plt.scatter(self.goal[1], self.goal[0], s=50, c='blue', marker='*')
+            plt.scatter(self.goal[1], self.goal[0], s=5, c='blue', marker='*')
             plt.savefig(f"rrt_star_debug_{self.grid_num}.png")
             plt.close()
             return None

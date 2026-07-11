@@ -43,11 +43,11 @@ def main():
 
             print("\nBeginning RRT analysis...")
             rrt_path, rrt_time = rrt_test(og_util, grid_num, start, goal)
-            print(f"{rrt_time*1000:.2f}ms to run RRT")
+            print(f"{rrt_time*1000}ms to run RRT")
 
             print("\nBeginning A* analysis...")
             astar_path, astar_time = astar_test(grid, start, goal)
-            print(f"{astar_time*1000:.2f}ms to run A*")
+            print(f"{astar_time*1000}ms to run A*")
 
             diff_ms = abs(astar_time - rrt_time) * 1000
             faster = "A*" if astar_time < rrt_time else "RRT"

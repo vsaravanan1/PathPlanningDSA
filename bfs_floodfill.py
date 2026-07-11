@@ -79,26 +79,4 @@ def double_bfs(og_util : OccupancyGridUtilities, grid_num : int, mask : np.array
     return np.array(start_point), np.array(end_point)
 
 
-# def main():
-#     og_util = OccupancyGridUtilities()
-#     for i in range(12):
-#         fs_id, pockets = bfs_floodfill(og_util, i)
-        
-#         pockets.sort(key = lambda a : np.sum(a), reverse=True)
-#         filtered_pockets = pockets[:5]
-        
-#         max_norm = 0
-#         for mask in filtered_pockets:
-#             start_point_c, end_point_c = double_bfs(og_util, i, mask)
-#             if np.linalg.norm(np.array(end_point_c) - np.array(start_point_c)) > max_norm:
-#                 start_point, end_point = start_point_c, end_point_c
-#                 max_norm = np.linalg.norm(np.array(end_point) - np.array(start_point))
-
-#         print(f"Occupancy grid: {i}, Start: {start_point}, End: {end_point}")
-    
-# if __name__ == "__main__":
-#     main()
-
-
-        
                     
